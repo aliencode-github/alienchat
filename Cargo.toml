@@ -19,3 +19,6 @@ tokio-core = "*"
 serde = "*"
 serde_json = "*"
 serde_derive = "*"
+
+chrono = "*"
+uuid = { version = "0.6", features = ["v4"] }

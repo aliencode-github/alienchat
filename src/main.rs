@@ -10,6 +10,8 @@ extern crate serde;
 extern crate serde_json;
 extern crate tokio_core;
 extern crate tokio_io;
+extern crate uuid;
+extern crate chrono;
 
 use actix::{Addr, Arbiter, Syn};
 use actix_web::{http, middleware, server::HttpServer, App, HttpResponse};
@@ -18,6 +20,11 @@ use actix_web::{http, middleware, server::HttpServer, App, HttpResponse};
 #[macro_use]
 mod chatserver;
 mod websocket;
+mod room_controller;
+mod role;
+mod user;
+mod room;
+mod utils;
 
 fn main() {
     // Enable logger
