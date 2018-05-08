@@ -1,18 +1,18 @@
-use std::path::Path;
 use role::Role;
 use chrono::DateTime;
 use chrono::Local;
 use uuid::Uuid;
+use serde_json;
 
-#[derive(Debug)]
+#[derive(Debug,Serialize,Deserialize,Clone)]
 pub struct User{
     id:Uuid,
-    image:Option<Box<Path>>,
+    image:String,
     email:String,
     display_name:String,
     username:String,
     password:String,
-    state:u8,
+    state:State,
     created_at:DateTime<Local>,
     updated_at:Option<DateTime<Local>>,
     last_online:Option<DateTime<Local>>,
@@ -24,12 +24,12 @@ impl User{
     pub fn new(email:String,display_name:String,username:String,password:String) -> User{
         User{
             id:Uuid::new_v4(),
-            image:None,
+            image:"".to_string(),
             email,
             display_name,
             username,
             password,
-            state: 0,
+            state: State::Offline,
             created_at: Local::now(),
             updated_at: None,
             last_online: None,
@@ -45,48 +45,33 @@ impl User{
         self.roles.clone()
     }
 
-    pub fn grant_role(&mut self,role:Role){
-        self.roles.push(role);
+    pub fn grant_role(&mut self,role:&Role){
+        self.roles.push(role.clone());
     }
 
     pub fn revoke_role(&mut self,role:&Role){
 
-        let mut counter:usize = 0;
-        let mut match_flag = false;
-
-        for x in &self.roles{
-
-            if x.eq(role){
-                match_flag = true;
-                break;
-            }
-            counter +=1;
-        }
-
-        if match_flag {
-            self.roles.remove(counter);
-        }
+        self.roles.iter()
+            .position(|role| role.eq(role))
+            .map(|n| self.roles.remove(n));
 
     }
 
-    //states are defiend as 0 => offline 1 => away 2 => busy 3= offline
-    pub fn update_state(&mut self,state:u8)-> bool{
-        if state < 4 {
-            self.state = state;
-            return true;
-        }
-
-        false
+    pub fn has_role(&mut self,role:&Role) -> bool{
+        self.roles.contains(role)
     }
 
-    pub fn get_id(&self)->&Uuid{
-        &self.id
+    pub fn update_state(&mut self,state:State){
+        self.state = state;
     }
 
     pub fn copy_id(&self) -> Uuid{
         self.id.clone()
     }
 
+    pub fn get_id(&self) -> &Uuid {
+        &self.id
+    }
 }
 
 impl PartialEq for User{
@@ -94,3 +79,36 @@ impl PartialEq for User{
         self.id == other.id
     }
 }
+
+#[derive(Debug,Serialize,Deserialize,Clone)]
+pub enum State{
+    Online,
+    Offline,
+    Away,
+    Busy
+}
+
+// this test exists simply to print a serialized user object (cargo test -- --nocapture)
+#[test]
+fn test_user_serialize(){
+    let mut user = User::new("user@example.com".to_string(),"user1".to_string(),"username1".to_string(),"password1".to_string());
+
+    println!("{:?}",serde_json::ser::to_string(&user));
+
+    assert!(true);
+}
+
+#[test]
+fn test_role(){
+    let mut user = User::new("user@example.com".to_string(),"user1".to_string(),"username1".to_string(),"password1".to_string());
+    let role = Role::new(11,"test".to_string()).unwrap();
+
+    user.grant_role(&role);
+    assert!(user.has_role(&role));
+
+    user.revoke_role(&role);
+    assert!(!user.has_role(&role));
+}
+
+
+

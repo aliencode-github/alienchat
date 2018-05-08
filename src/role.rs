@@ -1,4 +1,4 @@
-#[derive(PartialEq,Clone,Debug)]
+#[derive(PartialEq,Clone,Debug,Serialize,Deserialize)]
 pub struct Role{
     id:u8,
     display_name:String
