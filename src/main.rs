@@ -2,6 +2,7 @@ extern crate actix;
 extern crate actix_web;
 extern crate byteorder;
 extern crate bytes;
+extern crate chrono;
 extern crate env_logger;
 extern crate futures;
 extern crate openssl;
@@ -11,7 +12,6 @@ extern crate serde_json;
 extern crate tokio_core;
 extern crate tokio_io;
 extern crate uuid;
-extern crate chrono;
 
 #[macro_use]
 extern crate serde_derive;
@@ -22,13 +22,13 @@ use actix_web::{http, middleware, server::HttpServer, App, HttpResponse};
 
 #[macro_use]
 mod chatserver;
-mod websocket;
 mod controller;
-mod role;
-mod user;
-mod room;
 mod external_data_source;
 mod mock_data;
+mod role;
+mod room;
+mod user;
+mod websocket;
 
 fn main() {
     // Enable logger
