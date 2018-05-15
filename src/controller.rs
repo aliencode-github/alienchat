@@ -168,231 +168,114 @@ where
     }
 
     pub fn add_member_to_room(&mut self, room_id: &Uuid, user_id: Uuid) {
-        match self.find_room_match(room_id) {
-            Some((counter, room_public)) => {
-                if room_public {
-                    match self.public_rooms.get_mut(counter) {
-                        Some(t) => t.add_member(user_id),
-                        None => (),
-                    }
-                } else {
-                    match self.private_rooms.get_mut(counter) {
-                        Some(t) => t.add_member(user_id),
-                        None => (),
-                    }
-                }
-            }
+
+        match self.find_mut_room(room_id){
+            Some(room) =>room.add_member(user_id),
             None => (),
         }
     }
 
     pub fn remove_member_from_room(&mut self, room_id: &Uuid, user_id: &Uuid) -> bool {
-        match self.find_room_match(room_id) {
-            Some((counter, room_public)) => {
-                if room_public {
-                    match self.public_rooms.get_mut(counter) {
-                        Some(t) => return t.remove_member(user_id),
-                        None => false,
-                    }
-                } else {
-                    return match self.private_rooms.get_mut(counter) {
-                        Some(t) => t.remove_member(user_id),
-                        None => false,
-                    };
-                }
-            }
+
+        match self.find_mut_room(room_id){
+            Some(room) =>room.remove_member(user_id),
             None => false,
         }
     }
 
     pub fn add_moderator_to_room(&mut self, room_id: &Uuid, user_id: Uuid) {
-        match self.find_room_match(room_id) {
-            Some((counter, room_public)) => {
-                if room_public {
-                    match self.public_rooms.get_mut(counter) {
-                        Some(t) => {
-                            t.add_moderator(user_id);
-                            if !t.has_member(&user_id) {
-                                t.add_member(user_id);
-                            }
-                        }
-                        None => (),
-                    }
-                } else {
-                    match self.private_rooms.get_mut(counter) {
-                        Some(t) => {
-                            t.add_moderator(user_id);
-                            if !t.has_member(&user_id) {
-                                t.add_member(user_id);
-                            }
-                        }
-                        None => (),
-                    }
+
+        match self.find_mut_room(room_id){
+            Some(room) =>{
+                room.add_moderator(user_id);
+                if !room.has_member(&user_id){
+                    room.add_member(user_id);
                 }
-            }
+            },
             None => (),
-        };
+        }
     }
 
     pub fn remove_moderator_from_room(&mut self, room_id: &Uuid, user_id: &Uuid) -> bool {
-        match self.find_room_match(room_id) {
-            Some((counter, room_public)) => {
-                if room_public {
-                    match self.public_rooms.get_mut(counter) {
-                        Some(t) => t.remove_moderator(user_id),
-                        None => false,
-                    }
-                } else {
-                    match self.private_rooms.get_mut(counter) {
-                        Some(t) => t.remove_moderator(user_id),
-                        None => false,
-                    }
-                }
-            }
+
+        match self.find_mut_room(room_id){
+            Some(room) =>room.remove_moderator(user_id),
             None => false,
         }
     }
 
     pub fn ban_member(&mut self, room_id: &Uuid, user_id: Uuid) {
-        match self.find_room_match(room_id) {
-            Some((counter, room_public)) => {
-                if room_public {
-                    match self.public_rooms.get_mut(counter) {
-                        Some(t) => {
-                            t.bann_member(user_id);
-                            t.remove_member(&user_id);
-                            t.remove_moderator(&user_id);
-                        }
-                        None => (),
-                    };
-                } else {
-                    match self.private_rooms.get_mut(counter) {
-                        Some(t) => {
-                            t.bann_member(user_id);
-                            t.remove_member(&user_id);
-                            t.remove_moderator(&user_id);
-                        }
-                        None => (),
-                    };
-                }
-            }
+
+        match self.find_mut_room(room_id){
+            Some(room) =>{
+                room.bann_member(user_id);
+                room.remove_member(&user_id);
+                room.remove_moderator(&user_id);
+            },
             None => (),
         }
     }
 
     pub fn unban_member(&mut self, room_id: &Uuid, user_id: Uuid) -> bool {
-        match self.find_room_match(room_id) {
-            Some((counter, room_public)) => {
-                if room_public {
-                    match self.public_rooms.get_mut(counter) {
-                        Some(t) => return t.unbann_member(user_id),
-                        None => false,
-                    }
-                } else {
-                    return match self.private_rooms.get_mut(counter) {
-                        Some(t) => t.unbann_member(user_id),
-                        None => false,
-                    };
-                }
-            }
+
+        match self.find_mut_room(room_id){
+            Some(room) =>room.unbann_member(user_id),
             None => false,
         }
     }
 
     pub fn mute_member(&mut self, room_id: &Uuid, user_id: Uuid) {
-        match self.find_room_match(room_id) {
-            Some((counter, room_public)) => {
-                if room_public {
-                    match self.public_rooms.get_mut(counter) {
-                        Some(t) => t.mute_member(user_id),
-                        None => (),
-                    }
-                } else {
-                    match self.private_rooms.get_mut(counter) {
-                        Some(t) => t.mute_member(user_id),
-                        None => (),
-                    }
-                }
-            }
+
+        match self.find_mut_room(room_id){
+            Some(room) =>room.mute_member(user_id),
             None => (),
         }
     }
 
     pub fn unmute_member(&mut self, room_id: &Uuid, user_id: &Uuid) -> bool {
-        match self.find_room_match(room_id) {
-            Some((counter, room_public)) => {
-                if room_public {
-                    match self.public_rooms.get_mut(counter) {
-                        Some(t) => return t.unmute_member(user_id),
-                        None => false,
-                    }
-                } else {
-                    return match self.private_rooms.get_mut(counter) {
-                        Some(t) => t.unmute_member(user_id),
-                        None => false,
-                    };
-                }
-            }
+
+        match self.find_mut_room(room_id){
+            Some(room) =>room.unmute_member(user_id),
             None => false,
         }
     }
 
     pub fn find_room(&self, id: &Uuid) -> Option<&Room> {
-        match self.find_room_match(id) {
-            Some((counter, public_room)) => {
-                if public_room {
-                    return self.public_rooms.get(counter);
-                } else {
-                    return self.private_rooms.get(counter);
-                }
-            }
-            None => None,
-        }
+
+        match self.public_rooms.iter()
+            .position(|room| room.eq_by_uuid(id))
+            .map(|x| {
+                return self.public_rooms.get(x);
+            }){
+            Some(v) => return v,
+            None => ()
+        };
+
+        match self.private_rooms.iter()
+            .position(|room| room.eq_by_uuid(id))
+            .map(|x|{
+                return self.private_rooms.get(x);
+            }){
+            Some(v) => return v,
+            None => return None
+        };
+
     }
 
     pub fn find_mut_room(&mut self, id: &Uuid) -> Option<&mut Room>{
-        match self.find_room_match(id) {
-            Some((counter, public_room)) => {
-                if public_room {
-                    return self.public_rooms.get_mut(counter);
-                } else {
-                    return self.private_rooms.get_mut(counter);
-                }
-            }
-            None => None,
-        }
-    }
 
-    fn find_room_match(&self, id: &Uuid) -> Option<(usize, bool)> {
-        let mut counter = 0;
-        let mut matched = false;
-
-        for x in &self.public_rooms {
-            if x.eq_by_uuid(id) {
-                matched = true;
-                break;
-            }
-            counter += 1;
+        match self.public_rooms.iter()
+            .position(|room| room.eq_by_uuid(id)){
+            Some(x) => return self.public_rooms.get_mut(x),
+            None => ()
         }
 
-        if matched {
-            return Some((counter, true));
-        }
-        counter = 0;
-
-        for y in &self.private_rooms {
-            if y.eq_by_uuid(id) {
-                matched = true;
-                break;
-            }
-            counter += 1;
-        }
-
-        if matched {
-            return Some((counter, false));
-        }
-
-        None
+        match self.private_rooms.iter()
+            .position(|room| room.eq_by_uuid(id))
+            {
+            Some(x) => return self.private_rooms.get_mut(x),
+            None => return None
+        };
     }
 
     pub fn join_room(&mut self,room_id:&Uuid,user_id:&Uuid) -> bool{
