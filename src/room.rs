@@ -8,7 +8,7 @@ pub struct Room {
     name: String,
     owner: Uuid,
     members: Vec<Uuid>,
-    online_members:Vec<Uuid>,
+    online_members: Vec<Uuid>,
     topic: String,
     private: bool,
     hidden: bool,
@@ -47,7 +47,7 @@ impl Room {
         self.private
     }
 
-    pub fn set_private(&mut self,flag:bool){
+    pub fn set_private(&mut self, flag: bool) {
         self.private = flag;
     }
 
@@ -55,7 +55,7 @@ impl Room {
         self.hidden
     }
 
-    pub fn set_hidden(&mut self, flag:bool){
+    pub fn set_hidden(&mut self, flag: bool) {
         self.hidden = flag;
     }
 
@@ -143,17 +143,18 @@ impl Room {
         &self.id
     }
 
-    pub fn add_online_member(&mut self, user_id:&Uuid){
+    pub fn add_online_member(&mut self, user_id: &Uuid) {
         self.online_members.push(user_id.clone());
     }
 
-    pub fn remove_online_member(&mut self, user_id:&Uuid){
-        self.online_members.iter()
+    pub fn remove_online_member(&mut self, user_id: &Uuid) {
+        self.online_members
+            .iter()
             .position(|i| i.eq(&user_id))
             .map(|x| self.online_members.remove(x));
     }
 
-    pub fn get_online_members(&self) -> &Vec<Uuid>{
+    pub fn get_online_members(&self) -> &Vec<Uuid> {
         &self.online_members
     }
 }
@@ -188,7 +189,7 @@ fn test_room_serialize() {
 }
 
 #[test]
-fn test_online_member(){
+fn test_online_member() {
     use user::User;
     let user = User::new(
         "user@example.com".to_string(),

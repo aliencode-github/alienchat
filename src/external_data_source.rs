@@ -9,9 +9,9 @@ pub trait UserDataInterface {
 
     fn provide_user(&mut self, user_id: &Uuid) -> Option<User>;
 
-    fn store_user(&mut self,user:User);
+    fn store_user(&mut self, user: User);
 
-    fn update_user(&mut self,user:User);
+    fn update_user(&mut self, user: User);
 }
 
 pub trait RoomDataInterface {
@@ -19,7 +19,7 @@ pub trait RoomDataInterface {
 
     fn provide_room(&mut self, room_id: &Uuid) -> Option<Room>;
 
-    fn store_room(&mut self, room:Room);
+    fn store_room(&mut self, room: Room);
 
-    fn update_room(&mut self, room:Room);
+    fn update_room(&mut self, room: Room);
 }

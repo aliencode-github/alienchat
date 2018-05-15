@@ -83,7 +83,8 @@ impl UserDataInterface for MockUserDataImpl {
     }
 
     fn update_user(&mut self, user: User) {
-        self.user_data.iter()
+        self.user_data
+            .iter()
             .position(|u| u.get_id() == user.get_id())
             .map(|p| self.user_data.remove(p));
 
@@ -132,7 +133,8 @@ impl RoomDataInterface for MockRoomDataImpl {
     }
 
     fn update_room(&mut self, room: Room) {
-        self.room_data.iter()
+        self.room_data
+            .iter()
             .position(|u| u.get_id() == room.get_id())
             .map(|p| self.room_data.remove(p));
 

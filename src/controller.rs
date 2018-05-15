@@ -1,18 +1,18 @@
+use chrono::DateTime;
+use chrono::Local;
 use external_data_source::RoomDataInterface;
 use external_data_source::UserDataInterface;
 use role::Role;
 use room::Room;
+use std::collections::hash_map::DefaultHasher;
 use std::fmt::Debug;
 use std::fmt::Error;
 use std::fmt::Formatter;
+use std::hash::Hash;
+use std::hash::Hasher;
 use user::State;
 use user::User;
 use uuid::Uuid;
-use chrono::Local;
-use chrono::DateTime;
-use std::collections::hash_map::DefaultHasher;
-use std::hash::Hasher;
-use std::hash::Hash;
 
 #[derive(Debug)]
 pub struct Controller<U, R>
@@ -92,12 +92,12 @@ where
         self.user_data_interface.provide_user(user_id)
     }
 
-    pub fn grant_role(&mut self, user_id: &Uuid, role: &Role){
+    pub fn grant_role(&mut self, user_id: &Uuid, role: &Role) {
         match self.find_user(user_id) {
             Some(mut user) => {
                 user.grant_role(role);
                 self.user_data_interface.update_user(user);
-            },
+            }
             None => (),
         }
     }
@@ -107,17 +107,17 @@ where
             Some(mut user) => {
                 user.revoke_role(role);
                 self.user_data_interface.update_user(user);
-            },
+            }
             None => (),
         }
     }
 
     pub fn update_state(&mut self, user_id: &Uuid, state: State) {
         match self.find_user(user_id) {
-            Some(mut user) =>{
+            Some(mut user) => {
                 user.update_state(state);
                 self.user_data_interface.update_user(user);
-        },
+            }
             None => (),
         }
     }
@@ -130,7 +130,6 @@ where
     }
 
     pub fn add_room(&mut self, room: Room) {
-
         self.room_data_interface.store_room(room.clone());
 
         if room.is_private() {
@@ -168,147 +167,138 @@ where
     }
 
     pub fn add_member_to_room(&mut self, room_id: &Uuid, user_id: Uuid) {
-
-        match self.find_mut_room(room_id){
-            Some(room) =>room.add_member(user_id),
+        match self.find_mut_room(room_id) {
+            Some(room) => room.add_member(user_id),
             None => (),
         }
     }
 
     pub fn remove_member_from_room(&mut self, room_id: &Uuid, user_id: &Uuid) -> bool {
-
-        match self.find_mut_room(room_id){
-            Some(room) =>room.remove_member(user_id),
+        match self.find_mut_room(room_id) {
+            Some(room) => room.remove_member(user_id),
             None => false,
         }
     }
 
     pub fn add_moderator_to_room(&mut self, room_id: &Uuid, user_id: Uuid) {
-
-        match self.find_mut_room(room_id){
-            Some(room) =>{
+        match self.find_mut_room(room_id) {
+            Some(room) => {
                 room.add_moderator(user_id);
-                if !room.has_member(&user_id){
+                if !room.has_member(&user_id) {
                     room.add_member(user_id);
                 }
-            },
+            }
             None => (),
         }
     }
 
     pub fn remove_moderator_from_room(&mut self, room_id: &Uuid, user_id: &Uuid) -> bool {
-
-        match self.find_mut_room(room_id){
-            Some(room) =>room.remove_moderator(user_id),
+        match self.find_mut_room(room_id) {
+            Some(room) => room.remove_moderator(user_id),
             None => false,
         }
     }
 
     pub fn ban_member(&mut self, room_id: &Uuid, user_id: Uuid) {
-
-        match self.find_mut_room(room_id){
-            Some(room) =>{
+        match self.find_mut_room(room_id) {
+            Some(room) => {
                 room.bann_member(user_id);
                 room.remove_member(&user_id);
                 room.remove_moderator(&user_id);
-            },
+            }
             None => (),
         }
     }
 
     pub fn unban_member(&mut self, room_id: &Uuid, user_id: Uuid) -> bool {
-
-        match self.find_mut_room(room_id){
-            Some(room) =>room.unbann_member(user_id),
+        match self.find_mut_room(room_id) {
+            Some(room) => room.unbann_member(user_id),
             None => false,
         }
     }
 
     pub fn mute_member(&mut self, room_id: &Uuid, user_id: Uuid) {
-
-        match self.find_mut_room(room_id){
-            Some(room) =>room.mute_member(user_id),
+        match self.find_mut_room(room_id) {
+            Some(room) => room.mute_member(user_id),
             None => (),
         }
     }
 
     pub fn unmute_member(&mut self, room_id: &Uuid, user_id: &Uuid) -> bool {
-
-        match self.find_mut_room(room_id){
-            Some(room) =>room.unmute_member(user_id),
+        match self.find_mut_room(room_id) {
+            Some(room) => room.unmute_member(user_id),
             None => false,
         }
     }
 
     pub fn find_room(&self, id: &Uuid) -> Option<&Room> {
-
-        match self.public_rooms.iter()
+        match self.public_rooms
+            .iter()
             .position(|room| room.eq_by_uuid(id))
             .map(|x| {
                 return self.public_rooms.get(x);
-            }){
+            }) {
             Some(v) => return v,
-            None => ()
+            None => (),
         };
 
-        match self.private_rooms.iter()
+        match self.private_rooms
+            .iter()
             .position(|room| room.eq_by_uuid(id))
-            .map(|x|{
+            .map(|x| {
                 return self.private_rooms.get(x);
-            }){
+            }) {
             Some(v) => return v,
-            None => return None
+            None => return None,
         };
-
     }
 
-    pub fn find_mut_room(&mut self, id: &Uuid) -> Option<&mut Room>{
-
-        match self.public_rooms.iter()
-            .position(|room| room.eq_by_uuid(id)){
+    pub fn find_mut_room(&mut self, id: &Uuid) -> Option<&mut Room> {
+        match self.public_rooms
+            .iter()
+            .position(|room| room.eq_by_uuid(id))
+        {
             Some(x) => return self.public_rooms.get_mut(x),
-            None => ()
+            None => (),
         }
 
-        match self.private_rooms.iter()
+        match self.private_rooms
+            .iter()
             .position(|room| room.eq_by_uuid(id))
-            {
+        {
             Some(x) => return self.private_rooms.get_mut(x),
-            None => return None
+            None => return None,
         };
     }
 
-    pub fn join_room(&mut self,room_id:&Uuid,user_id:&Uuid) -> bool{
-
+    pub fn join_room(&mut self, room_id: &Uuid, user_id: &Uuid) -> bool {
         let admin_flag = self.verify_admin(user_id);
 
-        match self.find_mut_room(room_id){
-
+        match self.find_mut_room(room_id) {
             Some(mut room) => {
-
-                if room.is_private(){
-                    if room.has_member(user_id){
+                if room.is_private() {
+                    if room.has_member(user_id) {
                         room.add_online_member(user_id);
                         return true;
-                    }else if admin_flag{
+                    } else if admin_flag {
                         room.add_online_member(user_id);
                         return true;
                     }
-                }else{
+                } else {
                     room.add_online_member(user_id);
                     return true;
                 }
 
                 return false;
-            },
-            None => false
+            }
+            None => false,
         }
     }
 
-    pub fn leave_room(&mut self, room_id:&Uuid,user_id:&Uuid){
-        match self.find_mut_room(room_id){
+    pub fn leave_room(&mut self, room_id: &Uuid, user_id: &Uuid) {
+        match self.find_mut_room(room_id) {
             Some(mut room) => room.remove_online_member(user_id),
-            None => ()
+            None => (),
         }
     }
 
@@ -331,24 +321,21 @@ where
     //admin related methods
 
     //TODO: change experimental stage! => save token in database
-    pub fn generate_invite_token(&mut self, admin_id: &Uuid) -> Option<u64>{
-
-        if self.verify_admin(admin_id){
-
+    pub fn generate_invite_token(&mut self, admin_id: &Uuid) -> Option<u64> {
+        if self.verify_admin(admin_id) {
             let mut hasher = DefaultHasher::new();
-            let token = (admin_id.clone().to_string() + &DateTime::from(Local::now()).to_string()).hash(&mut hasher);
+            let token = (admin_id.clone().to_string() + &DateTime::from(Local::now()).to_string())
+                .hash(&mut hasher);
             return Some(hasher.finish());
         }
         None
     }
 
-    pub fn verify_admin(&mut self, admin_id :&Uuid) -> bool{
-
-        match self.find_user(admin_id){
+    pub fn verify_admin(&mut self, admin_id: &Uuid) -> bool {
+        match self.find_user(admin_id) {
             Some(mut value) => value.has_role(&Role::generate_admin()),
-            None => return false
+            None => return false,
         }
-
     }
 }
 
@@ -552,7 +539,7 @@ fn test_mute() {
 }
 
 #[test]
-fn test_admin(){
+fn test_admin() {
     use mock_data::*;
     let mut user_data_interface = MockUserDataImpl::new();
     let user_data = user_data_interface.provide_user_data();
@@ -561,15 +548,20 @@ fn test_admin(){
     let mut controller = Controller::new(user_data_interface, room_data_interface);
     let admin_role = Role::generate_admin();
 
-    controller.grant_role(&admin_id,&admin_role);
+    controller.grant_role(&admin_id, &admin_role);
 
-    assert!(controller.find_user(&admin_id).unwrap().has_role(&admin_role));
+    assert!(
+        controller
+            .find_user(&admin_id)
+            .unwrap()
+            .has_role(&admin_role)
+    );
 
-    println!("{:?}",controller.generate_invite_token(&admin_id).unwrap());
+    println!("{:?}", controller.generate_invite_token(&admin_id).unwrap());
 }
 
 #[test]
-fn test_join(){
+fn test_join() {
     use mock_data::*;
     let mut user_data_interface = MockUserDataImpl::new();
     let user_data = user_data_interface.provide_user_data();
@@ -585,13 +577,18 @@ fn test_join(){
         "1234567".to_string(),
     );
 
-    let mut room = Room::new(String::from("test room "),user.copy_id());
+    let mut room = Room::new(String::from("test room "), user.copy_id());
     //room.set_private(false);
     let room_id = room.copy_id();
 
-    controller.grant_role(&admin_id,&admin_role);
+    controller.grant_role(&admin_id, &admin_role);
     controller.add_room(room);
-    controller.join_room(&room_id,&admin_id);
-    assert!(controller.find_room(&room_id).unwrap().get_online_members().contains(&admin_id));
-
+    controller.join_room(&room_id, &admin_id);
+    assert!(
+        controller
+            .find_room(&room_id)
+            .unwrap()
+            .get_online_members()
+            .contains(&admin_id)
+    );
 }
