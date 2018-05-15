@@ -8,6 +8,11 @@ use std::fmt::Formatter;
 use user::State;
 use user::User;
 use uuid::Uuid;
+use chrono::Local;
+use chrono::DateTime;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::Hasher;
+use std::hash::Hash;
 
 #[derive(Debug)]
 pub struct Controller<U, R>
@@ -66,9 +71,9 @@ where
     }
 
     //user based methods
-    //TODO: insert user into the database
     pub fn add_user(&mut self, user: User) {
         self.user_list.push(user.copy_id());
+        self.user_data_interface.store_user(user);
     }
 
     //TODO: remove user from the database
@@ -87,25 +92,32 @@ where
         self.user_data_interface.provide_user(user_id)
     }
 
-    //TODO: update user in database!
-    pub fn grant_role(&mut self, user_id: &Uuid, role: &Role) {
+    pub fn grant_role(&mut self, user_id: &Uuid, role: &Role){
         match self.find_user(user_id) {
-            Some(mut user) => user.grant_role(role),
-            None => (),
-        }
-    }
-    //TODO: update user in database!
-    pub fn revoke_role(&mut self, user_id: &Uuid, role: &Role) {
-        match self.find_user(user_id) {
-            Some(mut user) => user.revoke_role(role),
+            Some(mut user) => {
+                user.grant_role(role);
+                self.user_data_interface.update_user(user);
+            },
             None => (),
         }
     }
 
-    //TODO: update user in database!
+    pub fn revoke_role(&mut self, user_id: &Uuid, role: &Role) {
+        match self.find_user(user_id) {
+            Some(mut user) => {
+                user.revoke_role(role);
+                self.user_data_interface.update_user(user);
+            },
+            None => (),
+        }
+    }
+
     pub fn update_state(&mut self, user_id: &Uuid, state: State) {
         match self.find_user(user_id) {
-            Some(mut user) => user.update_state(state),
+            Some(mut user) =>{
+                user.update_state(state);
+                self.user_data_interface.update_user(user);
+        },
             None => (),
         }
     }
@@ -118,6 +130,9 @@ where
     }
 
     pub fn add_room(&mut self, room: Room) {
+
+        self.room_data_interface.store_room(room.clone());
+
         if room.is_private() {
             self.private_rooms.push(room);
         } else {
@@ -335,6 +350,19 @@ where
         }
     }
 
+    pub fn find_mut_room(&mut self, id: &Uuid) -> Option<&mut Room>{
+        match self.find_room_match(id) {
+            Some((counter, public_room)) => {
+                if public_room {
+                    return self.public_rooms.get_mut(counter);
+                } else {
+                    return self.private_rooms.get_mut(counter);
+                }
+            }
+            None => None,
+        }
+    }
+
     fn find_room_match(&self, id: &Uuid) -> Option<(usize, bool)> {
         let mut counter = 0;
         let mut matched = false;
@@ -367,6 +395,40 @@ where
         None
     }
 
+    pub fn join_room(&mut self,room_id:&Uuid,user_id:&Uuid) -> bool{
+
+        let admin_flag = self.verify_admin(user_id);
+
+        match self.find_mut_room(room_id){
+
+            Some(mut room) => {
+
+                if room.is_private(){
+                    if room.has_member(user_id){
+                        room.add_online_member(user_id);
+                        return true;
+                    }else if admin_flag{
+                        room.add_online_member(user_id);
+                        return true;
+                    }
+                }else{
+                    room.add_online_member(user_id);
+                    return true;
+                }
+
+                return false;
+            },
+            None => false
+        }
+    }
+
+    pub fn leave_room(&mut self, room_id:&Uuid,user_id:&Uuid){
+        match self.find_mut_room(room_id){
+            Some(mut room) => room.remove_online_member(user_id),
+            None => ()
+        }
+    }
+
     //additional methods
 
     fn remove_room_from_vec(list: &mut Vec<Room>, reference: &Uuid) -> bool {
@@ -381,6 +443,29 @@ where
             .position(|ref n| n == &reference)
             .map(|e| list.remove(e))
             .is_some()
+    }
+
+    //admin related methods
+
+    //TODO: change experimental stage! => save token in database
+    pub fn generate_invite_token(&mut self, admin_id: &Uuid) -> Option<u64>{
+
+        if self.verify_admin(admin_id){
+
+            let mut hasher = DefaultHasher::new();
+            let token = (admin_id.clone().to_string() + &DateTime::from(Local::now()).to_string()).hash(&mut hasher);
+            return Some(hasher.finish());
+        }
+        None
+    }
+
+    pub fn verify_admin(&mut self, admin_id :&Uuid) -> bool{
+
+        match self.find_user(admin_id){
+            Some(mut value) => value.has_role(&Role::generate_admin()),
+            None => return false
+        }
+
     }
 }
 
@@ -583,16 +668,47 @@ fn test_mute() {
         .is_member_muted(user.get_id()));
 }
 
-/*#[test]
-fn test_room_data_interface(){
-    use mock_data::MockUserDataImpl;
-    use mock_data::MockRoomDataImpl;
+#[test]
+fn test_admin(){
+    use mock_data::*;
+    let mut user_data_interface = MockUserDataImpl::new();
+    let user_data = user_data_interface.provide_user_data();
+    let admin_id = user_data.get(0).unwrap().copy_id();
+    let mut room_data_interface = MockRoomDataImpl::new(&user_data);
+    let mut controller = Controller::new(user_data_interface, room_data_interface);
+    let admin_role = Role::generate_admin();
 
-    let controller = RoomController::new();
-    let mut user_data_provider = MockUserDataImpl::new();
-    user_data_provider.load_mock_data();
-    let mut room_data_provider = MockRoomDataImpl::new(user_data_provider.provide_user_data());
+    controller.grant_role(&admin_id,&admin_role);
 
-    println!("{:?}",room_data_provider.provide_room_data());
+    assert!(controller.find_user(&admin_id).unwrap().has_role(&admin_role));
 
-}*/
+    println!("{:?}",controller.generate_invite_token(&admin_id).unwrap());
+}
+
+#[test]
+fn test_join(){
+    use mock_data::*;
+    let mut user_data_interface = MockUserDataImpl::new();
+    let user_data = user_data_interface.provide_user_data();
+    let admin_id = user_data.get(0).unwrap().copy_id();
+    let mut room_data_interface = MockRoomDataImpl::new(&user_data);
+    let mut controller = Controller::new(user_data_interface, room_data_interface);
+    let admin_role = Role::generate_admin();
+
+    let user = User::new(
+        "blubb@example.com".to_string(),
+        "Test Test".to_string(),
+        "blubb".to_string(),
+        "1234567".to_string(),
+    );
+
+    let mut room = Room::new(String::from("test room "),user.copy_id());
+    //room.set_private(false);
+    let room_id = room.copy_id();
+
+    controller.grant_role(&admin_id,&admin_role);
+    controller.add_room(room);
+    controller.join_room(&room_id,&admin_id);
+    assert!(controller.find_room(&room_id).unwrap().get_online_members().contains(&admin_id));
+
+}

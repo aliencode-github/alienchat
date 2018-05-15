@@ -77,6 +77,18 @@ impl UserDataInterface for MockUserDataImpl {
         }
         None
     }
+
+    fn store_user(&mut self, user: User) {
+        self.user_data.push(user);
+    }
+
+    fn update_user(&mut self, user: User) {
+        self.user_data.iter()
+            .position(|u| u.get_id() == user.get_id())
+            .map(|p| self.user_data.remove(p));
+
+        self.user_data.push(user);
+    }
 }
 
 #[derive(Debug)]
@@ -113,5 +125,17 @@ impl RoomDataInterface for MockRoomDataImpl {
             }
         }
         None
+    }
+
+    fn store_room(&mut self, room: Room) {
+        self.room_data.push(room);
+    }
+
+    fn update_room(&mut self, room: Room) {
+        self.room_data.iter()
+            .position(|u| u.get_id() == room.get_id())
+            .map(|p| self.room_data.remove(p));
+
+        self.room_data.push(room);
     }
 }

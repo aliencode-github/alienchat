@@ -8,6 +8,7 @@ pub struct Room {
     name: String,
     owner: Uuid,
     members: Vec<Uuid>,
+    online_members:Vec<Uuid>,
     topic: String,
     private: bool,
     hidden: bool,
@@ -28,6 +29,7 @@ impl Room {
             name,
             owner,
             members: vec![owner],
+            online_members: Vec::new(),
             topic: "".to_string(),
             private: true,
             hidden: false,
@@ -45,8 +47,16 @@ impl Room {
         self.private
     }
 
+    pub fn set_private(&mut self,flag:bool){
+        self.private = flag;
+    }
+
     pub fn is_hidden(&self) -> bool {
         self.hidden
+    }
+
+    pub fn set_hidden(&mut self, flag:bool){
+        self.hidden = flag;
     }
 
     pub fn generate_time_tupel(
@@ -132,6 +142,20 @@ impl Room {
     pub fn get_id(&self) -> &Uuid {
         &self.id
     }
+
+    pub fn add_online_member(&mut self, user_id:&Uuid){
+        self.online_members.push(user_id.clone());
+    }
+
+    pub fn remove_online_member(&mut self, user_id:&Uuid){
+        self.online_members.iter()
+            .position(|i| i.eq(&user_id))
+            .map(|x| self.online_members.remove(x));
+    }
+
+    pub fn get_online_members(&self) -> &Vec<Uuid>{
+        &self.online_members
+    }
 }
 
 fn remove_ref(list: &mut Vec<Uuid>, element: &Uuid) -> bool {
@@ -161,6 +185,22 @@ fn test_room_serialize() {
     println!("{:?}", serde_json::ser::to_string(&room));
 
     assert!(true);
+}
+
+#[test]
+fn test_online_member(){
+    use user::User;
+    let user = User::new(
+        "user@example.com".to_string(),
+        "user1".to_string(),
+        "username1".to_string(),
+        "password1".to_string(),
+    );
+    let mut room = Room::new("Testroom".to_string(), user.copy_id());
+
+    room.add_online_member(user.get_id());
+
+    assert!(room.online_members.contains(user.get_id()));
 }
 
 /*
