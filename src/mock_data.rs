@@ -1,5 +1,4 @@
-use external_data_source::RoomDataInterface;
-use external_data_source::UserDataInterface;
+use external_data_source::{RoomDataInterface, UserDataInterface};
 use room::Room;
 use user::User;
 use uuid::Uuid;

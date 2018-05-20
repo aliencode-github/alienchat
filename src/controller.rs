@@ -1,17 +1,12 @@
-use chrono::DateTime;
-use chrono::Local;
-use external_data_source::RoomDataInterface;
-use external_data_source::UserDataInterface;
+use chrono::{DateTime, Local};
+use external_data_source::{RoomDataInterface, UserDataInterface};
+
 use role::Role;
 use room::Room;
 use std::collections::hash_map::DefaultHasher;
-use std::fmt::Debug;
-use std::fmt::Error;
-use std::fmt::Formatter;
-use std::hash::Hash;
-use std::hash::Hasher;
-use user::State;
-use user::User;
+use std::fmt::{Debug, Error, Formatter};
+use std::hash::{Hash, Hasher};
+use user::{State, User};
 use uuid::Uuid;
 
 #[derive(Debug)]

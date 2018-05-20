@@ -1,5 +1,4 @@
-use chrono::DateTime;
-use chrono::Local;
+use chrono::{DateTime, Local};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
