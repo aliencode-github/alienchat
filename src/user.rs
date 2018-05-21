@@ -1,5 +1,4 @@
-use chrono::DateTime;
-use chrono::Local;
+use chrono::{DateTime, Local};
 use role::Role;
 use serde_json;
 use uuid::Uuid;
